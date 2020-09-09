@@ -1,12 +1,22 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using Random = UnityEngine.Random;
+using UnityEngine.UI;
 
 public class BallScript : MonoBehaviour
 {
+    public TextMeshProUGUI pointsText;
+    public TextMeshProUGUI livesText;
+
+    public int points;
+    public int lives = 3;
+
+    public BlockPlacer bp;
     private Rigidbody2D rb;
+    
     public float ballSpeed;
     public float maxSpeed = 10f;
     public float minSpeed = 2f;
@@ -17,9 +27,9 @@ public class BallScript : MonoBehaviour
     private int[] dirOptions = {-1, 1};
     private int hDir;
     
-    // Start is called before the first frame update
     void Start() {
         rb = GetComponent<Rigidbody2D>();
+        bp = GameObject.Find("Blocks").GetComponent<BlockPlacer>();
         Reset(); 
     }
 
@@ -32,7 +42,7 @@ public class BallScript : MonoBehaviour
         hDir = dirOptions[Random.Range(0, dirOptions.Length)];
         
         // Add a horizontal force
-        rb.AddForce(transform.right * ballSpeed * hDir); // Randomly go Left or Right
+        rb.AddForce(transform.right * ballSpeed *.5f * hDir); // Randomly go Left or Right
         // Add a vertical force
         rb.AddForce(transform.up * ballSpeed * -1); // Force it to start going down
     }
@@ -40,11 +50,20 @@ public class BallScript : MonoBehaviour
     private void Reset() {
         rb.velocity = Vector2.zero;
         ballSpeed = 2;
-        transform.position = new Vector2(0, -2);
+        if (lives <= 0)
+        {
+            points = 0;
+            lives = 3;
+            bp.Reset();
+        }
+
+        SetText();
+        transform.position = new Vector2(0, -1);
         StartCoroutine("Launch");
     }
     
     // if the ball goes out of bounds
+    //or hits a block
     private void OnCollisionEnter2D(Collision2D other)
     {
         // did we hit a wall?
@@ -53,6 +72,34 @@ public class BallScript : MonoBehaviour
             // make pitch lower
             blip.pitch = 0.75f;
             blip.Play();
+            SpeedCheck();
+        }
+
+        if (other.gameObject.tag == "block")
+        {
+            blip.pitch = 1.1f;
+            blip.Play();
+            points++;
+            SetText();
+            Destroy(other.collider.gameObject);
+            SpeedCheck();
+        }
+        if (other.gameObject.tag == "block1")
+        {
+            blip.pitch = 1.2f;
+            blip.Play();
+            points+=2;
+            SetText();
+            Destroy(other.collider.gameObject);
+            SpeedCheck();
+        }
+        if (other.gameObject.tag == "block2")
+        {
+            blip.pitch = 1.3f;
+            blip.Play();
+            points+=5;
+            SetText();
+            Destroy(other.collider.gameObject);
             SpeedCheck();
         }
 
@@ -66,7 +113,9 @@ public class BallScript : MonoBehaviour
         }
         
         // did we hit the floor?
-        if (other.gameObject.name == "BottomWall") {
+        if (other.gameObject.name == "BottomWall")
+        {
+            lives--;
             Reset();
         }
     }
@@ -92,9 +141,29 @@ public class BallScript : MonoBehaviour
             rb.velocity = new Vector2(rb.velocity.x, (rb.velocity.y < 0) ? -minSpeed : minSpeed);
         }
         
-        Debug.Log(rb.velocity);
+        //Debug.Log(rb.velocity);
 
     }
 
+    private void SetText()
+    {
+        int numZeroes = 3 - points.ToString().Length;
+        string zeroes = "";
+        for (int i=0;i<numZeroes;i++)
+        {
+            zeroes += '0';
+        }
+
+        pointsText.text = zeroes+points;
+        
+        numZeroes = 3 - lives.ToString().Length;
+        zeroes = "";
+        for (int i=0;i<numZeroes;i++)
+        {
+            zeroes += '0';
+        }
+
+        livesText.text = zeroes+lives;
+    }
 
 }

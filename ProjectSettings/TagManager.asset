@@ -6,6 +6,8 @@ TagManager:
   tags:
   - wall
   - paddle
+  - block
+  - block1
   layers:
   - Default
   - TransparentFX
